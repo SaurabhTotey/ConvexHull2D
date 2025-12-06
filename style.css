@@ -1,0 +1,24 @@
+body {
+	display: grid;
+	grid-template-columns: 60% 40%;
+	margin: 0;
+	padding: 0;
+}
+
+#screen, #console {
+	height: 100vh;
+	margin: 0;
+}
+
+#screen {
+	grid-column: 1;
+	width: 100%;
+}
+
+#console {
+	grid-column: 2;
+	background-color: silver;
+	display: flex;
+	flex-direction: column;
+    padding: 2%;
+}
