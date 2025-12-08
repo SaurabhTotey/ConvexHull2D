@@ -132,6 +132,7 @@ const updateStatusText = (statusText) => animationStatusParagraph.textContent = 
  */
 const pointsInputElement = document.getElementById("points-input");
 let previousText = "";
+let points = [];
 const handlePointsInput = () => {
     const currentText = pointsInputElement.value;
     if (currentText === previousText) {
@@ -142,20 +143,51 @@ const handlePointsInput = () => {
     // TODO: update status text if animation was interrupted
     drawing.clear();
 
-    let points;
+    let newPoints = [];
     try {
-        points = JSON.parse(`[${currentText.replaceAll("(", "[").replaceAll(")", "]")}]`);
+        newPoints = JSON.parse(`[${currentText.replaceAll("(", "[").replaceAll(")", "]")}]`);
         // TODO: validate points: the object should be valid (i.e. what we're expecting), and the points must be in the range
-        updateStatusText(`Parsed ${points.length} points!`);
+        updateStatusText(`Parsed ${newPoints.length} points!`);
     } catch (e) {
         updateStatusText(`Couldn't parse points:\n${e}`);
         return;
     }
     
+    points = newPoints;
     drawing.add(...points.map(point => new Point(point[0], point[1])));
 };
 pointsInputElement.onchange = handlePointsInput;
 handlePointsInput();
+
+/*
+ * ------------------------------------------------
+ * Set up buttons to add randomly generated points
+ * ------------------------------------------------
+ */
+const addRandomPointsToPointsInput = (numberOfPoints) => {
+    const pointsToAdd = [...Array(numberOfPoints).keys()].map(i => [Math.floor(Math.random() * LOGICAL_WIDTH), Math.floor(Math.random() * LOGICAL_HEIGHT)]);
+    if (pointsInputElement.value) {
+        pointsInputElement.value += ", ";
+    }
+    let pointsToAddString = JSON.stringify(pointsToAdd);
+    pointsInputElement.value += pointsToAddString
+        .substring(1, pointsToAddString.length - 1) // Get rid of outside brackets
+        .replaceAll("[", "(")
+        .replaceAll("]", ")")
+        .replaceAll(",", ", ");
+    handlePointsInput();
+};
+const generateOneRandomPointButton = document.getElementById("generate-one-random-point-button");
+const generateTenRandomPointsButton = document.getElementById("generate-ten-random-points-button");
+const generateHundredRandomPointsButton = document.getElementById("generate-hundred-random-points-button");
+const clearButton = document.getElementById("clear-button");
+generateOneRandomPointButton.onclick = () => addRandomPointsToPointsInput(1);
+generateTenRandomPointsButton.onclick = () => addRandomPointsToPointsInput(10);
+generateHundredRandomPointsButton.onclick = () => addRandomPointsToPointsInput(100);
+clearButton.onclick = () => {
+    pointsInputElement.value = "";
+    handlePointsInput();
+};
 
 window.setInterval(() => {
     drawing.step();
