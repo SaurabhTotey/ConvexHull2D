@@ -179,11 +179,9 @@ const addRandomPointsToPointsInput = (numberOfPoints) => {
 };
 const generateOneRandomPointButton = document.getElementById("generate-one-random-point-button");
 const generateTenRandomPointsButton = document.getElementById("generate-ten-random-points-button");
-const generateHundredRandomPointsButton = document.getElementById("generate-hundred-random-points-button");
 const clearButton = document.getElementById("clear-button");
 generateOneRandomPointButton.onclick = () => addRandomPointsToPointsInput(1);
 generateTenRandomPointsButton.onclick = () => addRandomPointsToPointsInput(10);
-generateHundredRandomPointsButton.onclick = () => addRandomPointsToPointsInput(100);
 clearButton.onclick = () => {
     pointsInputElement.value = "";
     handlePointsInput();
