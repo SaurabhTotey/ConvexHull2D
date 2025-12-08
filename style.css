@@ -5,14 +5,10 @@ body {
 	padding: 0;
 }
 
-#screen, #console {
-	height: 100vh;
-	margin: 0;
-}
-
 #screen {
 	grid-column: 1;
 	width: 100%;
+	height: 100vh;
 }
 
 #console {
@@ -20,7 +16,9 @@ body {
 	background-color: silver;
 	display: flex;
 	flex-direction: column;
-    padding: 2%;
+    padding-left: 2%;
+    padding-right: 2%;
+    min-height: 100vh;
 }
 
 #points-input {
