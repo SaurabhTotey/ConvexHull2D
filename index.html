@@ -17,12 +17,13 @@
 	<canvas id="screen"></canvas>
 	<div id="console">
 		<h3>Animation Status</h3>
-		<p aria-live="polite">None in progress.</p>
+		<p id="animation-status" aria-live="polite">None in progress.</p>
 		<h3>Points</h3>
-		<textarea id="points-input"></textarea>
+		<textarea id="points-input">(200, 150), (400, 150), (300, 300)</textarea>
 		<button>Generate Random Point</button>
 		<button>Generate 10 Random Points</button>
 		<button>Generate 100 Random Points</button>
+		<button>Clear</button>
 		<h3>Convex Hull Algorithms</h3>
 		<button>Show Jarvis March Convex Hull Animation</button>
 		<button>Show Graham Scan Convex Hull Animation</button>

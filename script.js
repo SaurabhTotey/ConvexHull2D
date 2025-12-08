@@ -1,13 +1,22 @@
+/*
+ * ------------------------------------------------
+ * Initialize the canvas element
+ * ------------------------------------------------
+ */
 const canvas = document.getElementById("screen");
 canvas.setAttribute("width", `${canvas.offsetWidth}`);
 canvas.setAttribute("height", `${canvas.offsetHeight}`);
 const renderer = canvas.getContext("2d");
-canvas.strokeStyle = "black";
-
 window.onresize = () => {
 	canvas.setAttribute("width", `${window.innerWidth * 0.6}`);
 	canvas.setAttribute("height", `${window.innerHeight}`);
 };
+
+/*
+ * ------------------------------------------------
+ * Define main classes for visualization
+ * ------------------------------------------------
+ */
 
 class Canvas {
 
@@ -54,10 +63,102 @@ class Canvas {
 
 }
 
-const drawingCanvas = new Canvas(canvas, renderer, 600, 400);
+class Point {
+    constructor(x, y, color = "black") {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+    }
+}
+
+class DrawingManager {
+
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.objects = [];
+        this.animationInProgress = false;
+        this.animationFrame = 0;
+    }
+
+    clear() {
+        this.objects = [];
+        this.animationInProgress = false;
+        this.animationFrame = 0;
+    }
+
+    add(...objectsToAdd) {
+        this.objects.push(...objectsToAdd);
+    }
+
+    step() {
+        if (!this.animationInProgress) {
+            return;
+        }
+        this.animationFrame += 1;
+        // TODO: loop through objects and update accordingly; this is mostly relevant for animations
+    }
+
+    draw() {
+        this.canvas.clear();
+        this.canvas.drawDrawingArea();
+        // TODO: this will need to handle all sorts of objects that aren't just points
+        for (let objectToDraw of this.objects) {
+            this.canvas.renderer.beginPath();
+            this.canvas.renderer.arc(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x, objectToDraw.y), 5, 0, 2 * Math.PI);
+            this.canvas.renderer.fill();
+        }
+    }
+
+}
+
+const LOGICAL_WIDTH = 600;
+const LOGICAL_HEIGHT = 400
+
+const drawingCanvas = new Canvas(canvas, renderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+const drawing = new DrawingManager(drawingCanvas);
+
+/*
+ * ------------------------------------------------
+ * Initialize the animation status paragraph element
+ * ------------------------------------------------
+ */
+const animationStatusParagraph = document.getElementById("animation-status");
+const updateStatusText = (statusText) => animationStatusParagraph.textContent = statusText;
+
+/*
+ * ------------------------------------------------
+ * Initialize the points input text area element
+ * ------------------------------------------------
+ */
+const pointsInputElement = document.getElementById("points-input");
+let previousText = "";
+const handlePointsInput = () => {
+    const currentText = pointsInputElement.value;
+    if (currentText === previousText) {
+        return;
+    }
+    previousText = currentText;
+
+    // TODO: update status text if animation was interrupted
+    drawing.clear();
+
+    let points;
+    try {
+        points = JSON.parse(`[${currentText.replaceAll("(", "[").replaceAll(")", "]")}]`);
+        // TODO: validate points: the object should be valid (i.e. what we're expecting), and the points must be in the range
+        updateStatusText(`Parsed ${points.length} points!`);
+    } catch (e) {
+        updateStatusText(`Couldn't parse points:\n${e}`);
+        return;
+    }
+    
+    drawing.add(...points.map(point => new Point(point[0], point[1])));
+};
+pointsInputElement.onchange = handlePointsInput;
+handlePointsInput();
 
 window.setInterval(() => {
-    drawingCanvas.clear();
-    drawingCanvas.drawDrawingArea();
+    drawing.step();
+    drawing.draw();
     // TODO:
 }, 17);

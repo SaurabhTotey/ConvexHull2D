@@ -22,3 +22,7 @@ body {
 	flex-direction: column;
     padding: 2%;
 }
+
+#points-input {
+    height: 50vh;
+}
