@@ -187,6 +187,43 @@ clearButton.onclick = () => {
     handlePointsInput();
 };
 
+/*
+ * ------------------------------------------------
+ * Implement convex hull algorithms
+ * ------------------------------------------------
+ */
+const makeJarvisMarchAnimation = (points) => {
+    console.log("Consider Jarvis to be marched!"); // TODO:
+    return points.map(point => new Point(point[0], point[1]));
+};
+
+const makeGrahamScanAnimation = (points) => {
+    console.log("Consider Graham to be scanned!"); // TODO:
+    return points.map(point => new Point(point[0], point[1]));
+};
+
+/*
+ * ------------------------------------------------
+ * Initialize buttons to start animations
+ * ------------------------------------------------
+ */
+const jarvisMarchButton = document.getElementById("jarvis-march-button");
+const grahamScanButton = document.getElementById("graham-scan-button");
+const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreator) => () => {
+    // TODO: update status text if animation was interrupted
+    drawing.clear();
+
+    if (points.length < 3) {
+        updateStatusText("Not enough points to create a convex hull!");
+        return;
+    }
+
+    updateStatusText(`${algorithmName} in progress.`);
+    drawing.add(...algorithmAnimationCreator(points));
+};
+jarvisMarchButton.onclick = makeAlgorithmAnimationHandlerFor("Jarvis March", makeJarvisMarchAnimation);
+grahamScanButton.onclick = makeAlgorithmAnimationHandlerFor("Graham Scan", makeGrahamScanAnimation);
+
 window.setInterval(() => {
     drawing.step();
     drawing.draw();
