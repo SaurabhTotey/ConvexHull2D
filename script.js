@@ -70,6 +70,43 @@ class Point {
         this.color = color;
     }
 }
+class Line {
+    constructor(x1, y1, x2, y2, color = "black") {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+        this.color = color;
+    }
+}
+
+class Animated {
+    constructor(durationInFrames, animationStage, frameToRepresentationFunction) {
+        this.durationInFrames = durationInFrames;
+        this.animationStage = animationStage;
+        this.frameToRepresentationFunction = frameToRepresentationFunction;
+        this.progress = -1;
+    }
+
+    step() {
+        this.progress += 1;
+    }
+
+    getRepresentation() {
+        if (!this.hasStarted()) {
+            return null;
+        }
+        return this.frameToRepresentationFunction(this.progress);
+    }
+
+    hasStarted() {
+        return this.progress >= 0;
+    }
+
+    isDone() {
+        return this.progress >= this.durationInFrames;
+    }
+}
 
 class DrawingManager {
 
@@ -77,35 +114,63 @@ class DrawingManager {
         this.canvas = canvas;
         this.objects = [];
         this.animationInProgress = false;
-        this.animationFrame = 0;
+        this.animationStage = 0;
     }
 
     clear() {
         this.objects = [];
         this.animationInProgress = false;
-        this.animationFrame = 0;
     }
 
     add(...objectsToAdd) {
         this.objects.push(...objectsToAdd);
     }
 
+    startAnimation() {
+        this.animationStage = 0;
+        this.animationInProgress = true;
+    }
+
     step() {
         if (!this.animationInProgress) {
             return;
         }
-        this.animationFrame += 1;
-        // TODO: loop through objects and update accordingly; this is mostly relevant for animations
+        let minSeenAnimationStage = Infinity;
+        this.objects = this.objects.map((objectToUpdate) => {
+            if (!(objectToUpdate instanceof Animated)) {
+                return objectToUpdate;
+            }
+
+            if (this.animationStage === objectToUpdate.animationStage) {
+                objectToUpdate.step();
+            }
+            if (objectToUpdate.animationStage < minSeenAnimationStage) {
+                minSeenAnimationStage = objectToUpdate.animationStage;
+            }
+            return objectToUpdate.isDone() ? objectToUpdate.getRepresentation() : objectToUpdate;
+        });
+        this.animationStage = minSeenAnimationStage;
     }
 
     draw() {
         this.canvas.clear();
         this.canvas.drawDrawingArea();
-        // TODO: this will need to handle all sorts of objects that aren't just points
-        for (let objectToDraw of this.objects) {
-            this.canvas.renderer.beginPath();
-            this.canvas.renderer.arc(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x, objectToDraw.y), 5, 0, 2 * Math.PI);
-            this.canvas.renderer.fill();
+        const drawables = this.objects.map((objectToDraw) => {
+            return objectToDraw instanceof Animated ? objectToDraw.getRepresentation() : objectToDraw;
+        });
+        for (let objectToDraw of drawables) {
+            if (objectToDraw instanceof Point) {
+                this.canvas.renderer.strokeStyle = objectToDraw.color;
+                this.canvas.renderer.beginPath();
+                this.canvas.renderer.arc(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x, objectToDraw.y), 5, 0, 2 * Math.PI); // TODO: choose radius better
+                this.canvas.renderer.fill();
+            } else if (objectToDraw instanceof Line) {
+                this.canvas.renderer.strokeStyle = objectToDraw.color;
+                this.canvas.renderer.beginPath();
+                this.canvas.renderer.moveTo(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x1, objectToDraw.y1));
+                this.canvas.renderer.lineTo(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x2, objectToDraw.y2));
+                this.canvas.renderer.stroke();
+            }
         }
     }
 
@@ -202,6 +267,15 @@ const makeGrahamScanAnimation = (points) => {
     return points.map(point => new Point(point[0], point[1]));
 };
 
+const dumbTestAnimation = (points) => {
+    const drawables = points.map(point => new Point(point[0], point[1]));
+    drawables.push(new Line(0, 200, 600, 200));
+    drawables.push(new Animated(500, 0, (frame) => new Line(300, 400, 300, 400 - 400 * frame / 500, frame === 500 ? "blue" : "red")));
+    drawables.push(new Animated(500, 0, (frame) => new Line(0, 400, 600 * frame / 500, 400 - 400 * frame / 500)));
+    drawables.push(new Animated(500, 1, (frame) => new Line(0, 0, 600 * frame / 500, 400 * frame / 500)));
+    return drawables;
+}
+
 /*
  * ------------------------------------------------
  * Initialize buttons to start animations
@@ -220,8 +294,9 @@ const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreat
 
     updateStatusText(`${algorithmName} in progress.`);
     drawing.add(...algorithmAnimationCreator(points));
+    drawing.startAnimation();
 };
-jarvisMarchButton.onclick = makeAlgorithmAnimationHandlerFor("Jarvis March", makeJarvisMarchAnimation);
+jarvisMarchButton.onclick = makeAlgorithmAnimationHandlerFor("Jarvis March", dumbTestAnimation); // TODO: CHANGE AWAY FROM dumbTestAnimation
 grahamScanButton.onclick = makeAlgorithmAnimationHandlerFor("Graham Scan", makeGrahamScanAnimation);
 
 window.setInterval(() => {
