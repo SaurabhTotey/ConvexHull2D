@@ -79,7 +79,6 @@ class Line {
         this.color = color;
     }
 }
-
 class Animated {
     constructor(durationInFrames, animationStage, frameToRepresentationFunction) {
         this.durationInFrames = durationInFrames;
@@ -135,12 +134,16 @@ class DrawingManager {
         if (!this.animationInProgress) {
             return;
         }
+
         let minSeenAnimationStage = Infinity;
+        let hasSeenAnimation = false;
+
         this.objects = this.objects.map((objectToUpdate) => {
             if (!(objectToUpdate instanceof Animated)) {
                 return objectToUpdate;
             }
 
+            hasSeenAnimation = true;
             if (this.animationStage === objectToUpdate.animationStage) {
                 objectToUpdate.step();
             }
@@ -149,7 +152,13 @@ class DrawingManager {
             }
             return objectToUpdate.isDone() ? objectToUpdate.getRepresentation() : objectToUpdate;
         });
+
         this.animationStage = minSeenAnimationStage;
+
+        if (!hasSeenAnimation) {
+            updateStatusText("success", "Completed animation!");
+            this.animationInProgress = false;
+        }
     }
 
     draw() {
@@ -177,7 +186,7 @@ class DrawingManager {
 }
 
 const LOGICAL_WIDTH = 600;
-const LOGICAL_HEIGHT = 400
+const LOGICAL_HEIGHT = 400;
 
 const drawingCanvas = new Canvas(canvas, renderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
 const drawing = new DrawingManager(drawingCanvas);
@@ -188,7 +197,10 @@ const drawing = new DrawingManager(drawingCanvas);
  * ------------------------------------------------
  */
 const animationStatusParagraph = document.getElementById("animation-status");
-const updateStatusText = (statusText) => animationStatusParagraph.textContent = statusText;
+const updateStatusText = (type, statusText) => {
+    animationStatusParagraph.className = `status-${type}`;
+    animationStatusParagraph.textContent = statusText;
+};
 
 /*
  * ------------------------------------------------
@@ -205,16 +217,16 @@ const handlePointsInput = () => {
     }
     previousText = currentText;
 
-    // TODO: update status text if animation was interrupted
+    let isInterrupting = drawing.animationInProgress;
     drawing.clear();
 
     let newPoints = [];
     try {
         newPoints = JSON.parse(`[${currentText.replaceAll("(", "[").replaceAll(")", "]")}]`);
         // TODO: validate points: the object should be valid (i.e. what we're expecting), and the points must be in the range
-        updateStatusText(`Parsed ${newPoints.length} points!`);
+        updateStatusText(isInterrupting ? "info" : "success", (isInterrupting ? "Interrupted previous animation. " : "") + `Parsed ${newPoints.length} points!`);
     } catch (e) {
-        updateStatusText(`Couldn't parse points:\n${e}`);
+        updateStatusText("error", (isInterrupting ? "Interrupted previous animation. " : "") + `Couldn't parse points:\n${e}`);
         return;
     }
     
@@ -284,15 +296,15 @@ const dumbTestAnimation = (points) => {
 const jarvisMarchButton = document.getElementById("jarvis-march-button");
 const grahamScanButton = document.getElementById("graham-scan-button");
 const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreator) => () => {
-    // TODO: update status text if animation was interrupted
+    let isInterrupting = drawing.animationInProgress;
     drawing.clear();
 
     if (points.length < 3) {
-        updateStatusText("Not enough points to create a convex hull!");
+        updateStatusText("error", "Not enough points to create a convex hull!");
         return;
     }
 
-    updateStatusText(`${algorithmName} in progress.`);
+    updateStatusText("info", (isInterrupting ? "Interrupting previous animation. " : "") + `${algorithmName} in progress.`);
     drawing.add(...algorithmAnimationCreator(points));
     drawing.startAnimation();
 };

@@ -24,3 +24,15 @@ body {
 #points-input {
     height: 50vh;
 }
+
+.status-info {
+    color: black;
+}
+
+.status-error {
+    color: red;
+}
+
+.status-success {
+    color: blue;
+}
