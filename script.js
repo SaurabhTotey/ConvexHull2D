@@ -311,18 +311,30 @@ clearButton.onclick = () => {
 
 /*
  * ------------------------------------------------
+ * Utility functions
+ * ------------------------------------------------
+ */
+const normalized = (v) => {
+    const norm = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+    return [v[0] / norm, v[1] / norm];
+};
+const dot = (v, w) => v[0] * w[0] + v[1] * w[1];
+const crossMagnitude = (v, w) => v[0] * w[1] - v[1] * w[0];
+
+/*
+ * ------------------------------------------------
  * Implement convex hull algorithms
  * ------------------------------------------------
  */
 const makeJarvisMarchAnimation = (points) => {
     // Background points
     const drawables = points.map(point => new Point(point[0], point[1]));
+    let currentAnimationStage = 0;
 
     /*
      * Determine which point has the minimum x coordinate
      */
     const findingMinXPointAnimations = [];
-    let currentAnimationStage = 0;
     let pointOfMinX = null;
     for (let point of points) {
         if (pointOfMinX === null || point[0] < pointOfMinX[0] || point[0] === pointOfMinX[0] && point[1] < pointOfMinX[1]) {
@@ -348,6 +360,62 @@ const makeJarvisMarchAnimation = (points) => {
         (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfMinX[0] && drawingObject.y === pointOfMinX[1] && drawingObject.color === "black"
     ));
     drawables.push(...findingMinXPointAnimations);
+
+    /*
+     * Define the march procedure to get the next convex hull point
+     * Takes in the previous convex hull point and the direction vector that reached the point
+     * Returns two values: the first is the next convex hull point and the second is the list of animations to add
+     * The returned animations visualize what was checked in order to find the next convex hull point
+     */
+    const getNextConvexHullPointAndMakeAnimationsFrom = (previousConvexHullPoint, directionVectorToPreviousPoint) => {
+        const findingBestLineAnimations = [];
+        let pointOfLeastLeftTurn = null;
+        let largestDotProductSoFar = -Infinity;
+        for (let point of points) {
+            const directionToPoint = normalized([point[0] - previousConvexHullPoint[0], point[1] - previousConvexHullPoint[1]]);
+            const isPointLeftTurnAway = crossMagnitude(directionVectorToPreviousPoint, directionToPoint) > 0;
+            const dotProduct = dot(directionVectorToPreviousPoint, directionToPoint);
+            if (isPointLeftTurnAway && dotProduct > largestDotProductSoFar) {
+                if (pointOfLeastLeftTurn) {
+                    const endPointX = pointOfLeastLeftTurn[0];
+                    const endPointY = pointOfLeastLeftTurn[1];
+                    findingBestLineAnimations.push(new RemovalInstruction(
+                        0,
+                        currentAnimationStage,
+                        (drawingObject) => (drawingObject instanceof Line) && drawingObject.x2 === endPointX && drawingObject.y2 === endPointY
+                    ));
+                }
+                pointOfLeastLeftTurn = point;
+                largestDotProductSoFar = dotProduct;
+                findingBestLineAnimations.push(new Animated(
+                    10,
+                    currentAnimationStage,
+                    (_) => new Line(...previousConvexHullPoint, ...point, "blue")
+                ));
+            } else {
+                findingBestLineAnimations.push(new Animated(
+                    10,
+                    currentAnimationStage,
+                    (frameNumber) => frameNumber < 10 ? new Line(...previousConvexHullPoint, ...point, "red") : null
+                ));
+            }
+            currentAnimationStage += 1;
+        }
+        findingBestLineAnimations.push(new Animated(
+            10,
+            currentAnimationStage,
+            (_) => new Point(...pointOfLeastLeftTurn, "blue")
+        ));
+        findingBestLineAnimations.push(new RemovalInstruction(
+            0,
+            currentAnimationStage,
+            (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfLeastLeftTurn[0] && drawingObject.y === pointOfLeastLeftTurn[1] && drawingObject.color === "black"
+        ));
+        return [pointOfLeastLeftTurn, findingBestLineAnimations];
+    }
+    
+    // TODO:
+    drawables.push(...getNextConvexHullPointAndMakeAnimationsFrom(pointOfMinX, [0, -1])[1]);
 
     // TODO: rest of jarvis march
     return drawables;
