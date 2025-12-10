@@ -372,6 +372,9 @@ const makeJarvisMarchAnimation = (points) => {
         let pointOfLeastLeftTurn = null;
         let largestDotProductSoFar = -Infinity;
         for (let point of points) {
+            if (point[0] === previousConvexHullPoint[0] && point[1] == previousConvexHullPoint[1]) {
+                continue;
+            }
             const directionToPoint = normalized([point[0] - previousConvexHullPoint[0], point[1] - previousConvexHullPoint[1]]);
             const isPointLeftTurnAway = crossMagnitude(directionVectorToPreviousPoint, directionToPoint) > 0;
             const dotProduct = dot(directionVectorToPreviousPoint, directionToPoint);
@@ -429,11 +432,11 @@ const makeJarvisMarchAnimation = (points) => {
     let previousConvexHullPoint = pointOfMinX;
     do {
         const directionToPreviousConvexHullPoint = normalized([previousConvexHullPoint[0] - previousPreviousConvexHullPoint[0], previousConvexHullPoint[1] - previousPreviousConvexHullPoint[1]]);
-        const [newPreviousConvexHullPoint, newAnimations] = getNextConvexHullPointAndMakeAnimationsFrom(previousConvexHullPoint, directionToPreviousConvexHullPoint);
+        const [newConvexHullPoint, newAnimations] = getNextConvexHullPointAndMakeAnimationsFrom(previousConvexHullPoint, directionToPreviousConvexHullPoint);
         drawables.push(...newAnimations);
         previousPreviousConvexHullPoint = [previousConvexHullPoint[0], previousConvexHullPoint[1]];
-        previousConvexHullPoint = newPreviousConvexHullPoint;
-    } while (previousConvexHullPoint[0] !== pointOfMinX[0] && previousConvexHullPoint[1] !== pointOfMinX[1]);
+        previousConvexHullPoint = newConvexHullPoint;
+    } while (previousConvexHullPoint[0] !== pointOfMinX[0] || previousConvexHullPoint[1] !== pointOfMinX[1]);
 
     return drawables;
 };
