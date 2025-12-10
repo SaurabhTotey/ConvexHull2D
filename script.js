@@ -377,12 +377,19 @@ const makeJarvisMarchAnimation = (points) => {
             const dotProduct = dot(directionVectorToPreviousPoint, directionToPoint);
             if (isPointLeftTurnAway && dotProduct > largestDotProductSoFar) {
                 if (pointOfLeastLeftTurn) {
-                    const endPointX = pointOfLeastLeftTurn[0];
-                    const endPointY = pointOfLeastLeftTurn[1];
+                    const startX = previousConvexHullPoint[0];
+                    const startY = previousConvexHullPoint[1];
+                    const endX = pointOfLeastLeftTurn[0];
+                    const endY = pointOfLeastLeftTurn[1];
                     findingBestLineAnimations.push(new RemovalInstruction(
                         0,
                         currentAnimationStage,
-                        (drawingObject) => (drawingObject instanceof Line) && drawingObject.x2 === endPointX && drawingObject.y2 === endPointY
+                        (drawingObject) => (drawingObject instanceof Line)
+                            && drawingObject.x1 === startX
+                            && drawingObject.y1 === startY
+                            && drawingObject.x2 === endX
+                            && drawingObject.y2 === endY
+                            && drawingObject.color === "blue"
                     ));
                 }
                 pointOfLeastLeftTurn = point;
@@ -414,10 +421,20 @@ const makeJarvisMarchAnimation = (points) => {
         return [pointOfLeastLeftTurn, findingBestLineAnimations];
     }
     
-    // TODO:
-    drawables.push(...getNextConvexHullPointAndMakeAnimationsFrom(pointOfMinX, [0, -1])[1]);
+    /*
+     * Repeatedly run the main procedure for Jarvis March (getNextConvexHullPointAndMakeAnimationsFrom) until all convex hull points are found
+     * We know we've found all points when the convex hull closes up on itself (i.e. reaches the starting point)
+     */
+    let previousPreviousConvexHullPoint = [pointOfMinX[0], pointOfMinX[1] + 1];
+    let previousConvexHullPoint = pointOfMinX;
+    do {
+        const directionToPreviousConvexHullPoint = normalized([previousConvexHullPoint[0] - previousPreviousConvexHullPoint[0], previousConvexHullPoint[1] - previousPreviousConvexHullPoint[1]]);
+        const [newPreviousConvexHullPoint, newAnimations] = getNextConvexHullPointAndMakeAnimationsFrom(previousConvexHullPoint, directionToPreviousConvexHullPoint);
+        drawables.push(...newAnimations);
+        previousPreviousConvexHullPoint = [previousConvexHullPoint[0], previousConvexHullPoint[1]];
+        previousConvexHullPoint = newPreviousConvexHullPoint;
+    } while (previousConvexHullPoint[0] !== pointOfMinX[0] && previousConvexHullPoint[1] !== pointOfMinX[1]);
 
-    // TODO: rest of jarvis march
     return drawables;
 };
 
