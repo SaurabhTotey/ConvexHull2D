@@ -8,7 +8,7 @@ canvas.setAttribute("width", `${canvas.offsetWidth}`);
 canvas.setAttribute("height", `${canvas.offsetHeight}`);
 const renderer = canvas.getContext("2d");
 window.onresize = () => {
-	canvas.setAttribute("width", `${window.innerWidth * 0.6}`);
+	canvas.setAttribute("width", `${window.innerWidth * 0.7}`);
 	canvas.setAttribute("height", `${window.innerHeight}`);
 };
 
@@ -382,6 +382,8 @@ const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreat
         updateStatusText("error", "Not enough points to create a convex hull!");
         return;
     }
+
+    // TODO: validate that the points aren't collinear
 
     updateStatusText("info", (isInterrupting ? "Interrupting previous animation. " : "") + `${algorithmName} in progress.`);
     drawing.add(...algorithmAnimationCreator(points));
