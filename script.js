@@ -64,32 +64,75 @@ class Canvas {
 
 }
 
-class Point {
+class Drawable {
+    draw(renderer, canvas) {}
+}
+class Point extends Drawable {
     constructor(x, y, color = "black") {
+        super();
         this.x = x;
         this.y = y;
         this.color = color;
     }
+
+    draw(renderer, canvas) {
+        renderer.strokeStyle = this.color;
+        renderer.fillStyle = this.color;
+        renderer.beginPath();
+        renderer.arc(...canvas.convertLogicalCoordinatesToPhysical(this.x, this.y), 5, 0, 2 * Math.PI); // TODO: choose radius better
+        renderer.fill();
+
+    }
 }
-class Line {
+class Line extends Drawable {
     constructor(x1, y1, x2, y2, color = "black") {
+        super();
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
         this.y2 = y2;
         this.color = color;
     }
+
+    draw(renderer, canvas) {
+        renderer.strokeStyle = this.color;
+        renderer.beginPath();
+        renderer.moveTo(...canvas.convertLogicalCoordinatesToPhysical(this.x1, this.y1));
+        renderer.lineTo(...canvas.convertLogicalCoordinatesToPhysical(this.x2, this.y2));
+        renderer.stroke();
+
+    }
 }
-class Animated {
-    constructor(durationInFrames, animationStage, frameToRepresentationFunction) {
-        this.durationInFrames = durationInFrames;
+class Timed {
+    constructor(duration, animationStage) {
+        this.duration = duration;
         this.animationStage = animationStage;
-        this.frameToRepresentationFunction = frameToRepresentationFunction;
         this.progress = -1;
     }
 
     step() {
         this.progress += 1;
+    }
+
+    hasStarted() {
+        return this.progress >= 0;
+    }
+
+    isDone() {
+        return this.progress >= this.duration;
+    }
+}
+class Animated extends Timed { // also effectively extends Drawable
+    constructor(duration, animationStage, frameToRepresentationFunction) {
+        super(duration, animationStage);
+        this.frameToRepresentationFunction = frameToRepresentationFunction;
+    }
+
+    draw(renderer, canvas) {
+        const representation = this.getRepresentation();
+        if (representation) {
+            representation.draw(renderer, canvas);
+        }
     }
 
     getRepresentation() {
@@ -98,33 +141,11 @@ class Animated {
         }
         return this.frameToRepresentationFunction(this.progress);
     }
-
-    hasStarted() {
-        return this.progress >= 0;
-    }
-
-    isDone() {
-        return this.progress >= this.durationInFrames;
-    }
 }
-class RemovalInstruction { // TODO: make superclass for this and Animated
-    constructor(delayInFrames, animationStage, filterForRemovalFunction) {
-        this.delayInFrames = delayInFrames;
-        this.animationStage = animationStage;
+class RemovalInstruction extends Timed {
+    constructor(delay, animationStage, filterForRemovalFunction) {
+        super(delay, animationStage);
         this.filterForRemovalFunction = filterForRemovalFunction;
-        this.progress = -1;
-    }
-
-    step() {
-        this.progress += 1;
-    }
-
-    hasStarted() {
-        return this.progress >= 0;
-    }
-
-    isDone() {
-        return this.progress >= this.delayInFrames;
     }
 }
 
@@ -166,7 +187,7 @@ class DrawingManager {
                 continue;
             }
 
-            if (objectToUpdate instanceof Animated) {
+            if (objectToUpdate instanceof Timed) {
                 hasSeenAnimation = true;
                 if (this.animationStage === objectToUpdate.animationStage) {
                     objectToUpdate.step();
@@ -174,15 +195,11 @@ class DrawingManager {
                 if (objectToUpdate.animationStage < minSeenAnimationStage) {
                     minSeenAnimationStage = objectToUpdate.animationStage;
                 }
+            }
+
+            if (objectToUpdate instanceof Animated) {
                 newObjects.push(objectToUpdate.isDone() ? objectToUpdate.getRepresentation() : objectToUpdate);
             } else if (objectToUpdate instanceof RemovalInstruction) {
-                hasSeenAnimation = true;
-                if (this.animationStage === objectToUpdate.animationStage) {
-                    objectToUpdate.step()
-                }
-                if (objectToUpdate.animationStage < minSeenAnimationStage) {
-                    minSeenAnimationStage = objectToUpdate.animationStage;
-                }
                 if (objectToUpdate.isDone()) {
                     filterFunctions.push(objectToUpdate.filterForRemovalFunction);
                 } else {
@@ -206,24 +223,8 @@ class DrawingManager {
     draw() {
         this.canvas.clear();
         this.canvas.drawDrawingArea();
-        // TODO: this drawing logic can be simplified; perhaps make a drawable superclass and have each object define how it draws itself?
-        const drawables = this.objects.map((objectToDraw) => {
-            return objectToDraw instanceof Animated ? objectToDraw.getRepresentation() : objectToDraw;
-        });
-        for (let objectToDraw of drawables) {
-            if (objectToDraw instanceof Point) {
-                this.canvas.renderer.strokeStyle = objectToDraw.color;
-                this.canvas.renderer.fillStyle = objectToDraw.color;
-                this.canvas.renderer.beginPath();
-                this.canvas.renderer.arc(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x, objectToDraw.y), 5, 0, 2 * Math.PI); // TODO: choose radius better
-                this.canvas.renderer.fill();
-            } else if (objectToDraw instanceof Line) {
-                this.canvas.renderer.strokeStyle = objectToDraw.color;
-                this.canvas.renderer.beginPath();
-                this.canvas.renderer.moveTo(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x1, objectToDraw.y1));
-                this.canvas.renderer.lineTo(...this.canvas.convertLogicalCoordinatesToPhysical(objectToDraw.x2, objectToDraw.y2));
-                this.canvas.renderer.stroke();
-            }
+        for (let objectToDraw of this.objects.filter((obj) => obj && obj.draw)) {
+            objectToDraw.draw(this.canvas.renderer, this.canvas);
         }
     }
 
@@ -314,7 +315,12 @@ clearButton.onclick = () => {
  * ------------------------------------------------
  */
 const makeJarvisMarchAnimation = (points) => {
+    // Background points
     const drawables = points.map(point => new Point(point[0], point[1]));
+
+    /*
+     * Determine which point has the minimum x coordinate
+     */
     const findingMinXPointAnimations = [];
     let currentAnimationStage = 0;
     let pointOfMinX = null;
@@ -336,7 +342,14 @@ const makeJarvisMarchAnimation = (points) => {
         }
         currentAnimationStage += 1;
     }
+    findingMinXPointAnimations.push(new RemovalInstruction(
+        0,
+        currentAnimationStage,
+        (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfMinX[0] && drawingObject.y === pointOfMinX[1] && drawingObject.color === "black"
+    ));
     drawables.push(...findingMinXPointAnimations);
+
+    // TODO: rest of jarvis march
     return drawables;
 };
 
