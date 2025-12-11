@@ -67,6 +67,9 @@ class Canvas {
 
 }
 
+
+// TODO: this model of abstraction isn't accurately described: each of these are more like instructions that get queued
+//  the names should be updated and the terminology cleared up (down the line)
 class Drawable {
     draw(renderer, canvas) {}
 }
@@ -600,7 +603,15 @@ const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreat
         return;
     }
 
-    // TODO: validate that the points aren't collinear this is a secondary need
+    const baseCheckVector = normalized([[points[1][0] - points[0][0]], [points[1][1] - points[0][1]]]);
+    const areAllPointsColinear = points.slice(2).every((point) => {
+        const againstCheckVector = normalized([[point[0] - points[0][0]], [point[1] - points[0][1]]]);
+        return Math.abs(crossMagnitude(baseCheckVector, againstCheckVector)) == 0;
+    });
+    if (areAllPointsColinear) {
+        updateStatusText("error", "The points cannot all be colinear!")
+        return;
+    }
 
     updateStatusText("info", (isInterrupting ? "Interrupting previous animation. " : "") + `${algorithmName} in progress.`);
     drawing.add(...algorithmAnimationCreator(points));
