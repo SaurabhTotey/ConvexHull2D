@@ -79,7 +79,8 @@ class Point extends Drawable {
         renderer.strokeStyle = this.color;
         renderer.fillStyle = this.color;
         renderer.beginPath();
-        renderer.arc(...canvas.convertLogicalCoordinatesToPhysical(this.x, this.y), 5, 0, 2 * Math.PI); // TODO: choose radius better
+        const radius = canvas.convertLogicalCoordinatesToPhysical(2, 0)[0];
+        renderer.arc(...canvas.convertLogicalCoordinatesToPhysical(this.x, this.y), radius, 0, 2 * Math.PI);
         renderer.fill();
 
     }
@@ -442,8 +443,41 @@ const makeJarvisMarchAnimation = (points) => {
 };
 
 const makeGrahamScanAnimation = (points) => {
-    console.log("Consider Graham to be scanned!"); // TODO:
-    return points.map(point => new Point(point[0], point[1]));
+    // Background points
+    const drawables = points.map(point => new Point(point[0], point[1]));
+    let currentAnimationStage = 0;
+
+    /*
+     * Determine which point has the minimum y coordinate
+     */
+    const findingMinXPointAnimations = [];
+    let pointOfMinY = null;
+    for (let point of points) {
+        if (pointOfMinY === null || point[1] < pointOfMinY[1] || point[1] === pointOfMinY[1] && point[0] < pointOfMinY[0]) {
+            if (pointOfMinY) {
+                const removalX = pointOfMinY[0];
+                const removalY = pointOfMinY[1];
+                findingMinXPointAnimations.push(new RemovalInstruction(
+                    0,
+                    currentAnimationStage,
+                    (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === removalX && drawingObject.y === removalY && drawingObject.color === "blue"
+                ));
+            }
+            pointOfMinY = point;
+            findingMinXPointAnimations.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
+        } else {
+            findingMinXPointAnimations.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Point(...point, "red") : null));
+        }
+        currentAnimationStage += 1;
+    }
+    findingMinXPointAnimations.push(new RemovalInstruction(
+        0,
+        currentAnimationStage,
+        (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfMinY[0] && drawingObject.y === pointOfMinY[1] && drawingObject.color === "black"
+    ));
+    drawables.push(...findingMinXPointAnimations);
+
+    return drawables;
 };
 
 const dumbTestAnimation = (points) => {
@@ -478,7 +512,7 @@ const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreat
     drawing.startAnimation();
 };
 jarvisMarchButton.onclick = makeAlgorithmAnimationHandlerFor("Jarvis March", makeJarvisMarchAnimation);
-grahamScanButton.onclick = makeAlgorithmAnimationHandlerFor("Graham Scan", dumbTestAnimation); // TODO: CHANGE AWAY FROM dumbTestAnimation
+grahamScanButton.onclick = makeAlgorithmAnimationHandlerFor("Graham Scan", makeGrahamScanAnimation);
 
 window.setInterval(() => {
     drawing.step();
