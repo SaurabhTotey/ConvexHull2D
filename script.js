@@ -632,6 +632,24 @@ const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreat
 jarvisMarchButton.onclick = makeAlgorithmAnimationHandlerFor("Jarvis March", makeJarvisMarchAnimation);
 grahamScanButton.onclick = makeAlgorithmAnimationHandlerFor("Graham Scan", makeGrahamScanAnimation);
 
+/*
+ * ------------------------------------------------
+ * Initialize buttons to pause animations
+ * ------------------------------------------------
+ */
+const pauseButton = document.getElementById("pause-button");
+pauseButton.onclick = () => {
+    if (drawing.animationInProgress) {
+        drawing.animationInProgress = false;
+        updateStatusText("info", "Paused animation.");
+    } else if (drawing.objects.some((drawingObject) => drawingObject instanceof Timed)) {
+        drawing.animationInProgress = true;
+        updateStatusText("info", "Resumed animation.");
+    } else {
+        updateStatusText("error", "No animation in progress.");
+    }
+};
+
 window.setInterval(() => {
     drawing.step();
     drawing.draw();
