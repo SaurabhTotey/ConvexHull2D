@@ -57,7 +57,7 @@ class Canvas {
         this.renderer.clearRect(0, 0, ...this.getPhysicalSize());
     }
 
-    drawDrawingArea() {
+    drawDrawingArea() { // TODO: this is fucking ugly, change it! (immediate)
         this.renderer.strokeStyle = "black";
         this.renderer.strokeRect(...this.convertLogicalCoordinatesToPhysical(0, this.logicalHeight), ...this.getDrawingAreaSize());
     }
@@ -146,7 +146,7 @@ class Animated extends Timed { // also effectively extends Drawable
 class RemovalInstruction extends Timed {
     constructor(delay, animationStage, filterForRemovalFunction) {
         super(delay, animationStage);
-        this.filterForRemovalFunction = filterForRemovalFunction;
+        this.filterForRemovalFunction = filterForRemovalFunction; // TODO: this way of removing drawables is ASS, could use some reworking (down the line)
     }
 }
 
@@ -269,7 +269,7 @@ const handlePointsInput = () => {
     let newPoints = [];
     try {
         newPoints = JSON.parse(`[${currentText.replaceAll("(", "[").replaceAll(")", "]")}]`);
-        // TODO: validate points: the object should be valid (i.e. what we're expecting), and the points must be in the range
+        // TODO: validate points: the object should be valid (i.e. what we're expecting), and the points must be in the range (tertiary need)
         updateStatusText(isInterrupting ? "info" : "success", (isInterrupting ? "Interrupted previous animation. " : "") + `Parsed ${newPoints.length} points!`);
     } catch (e) {
         updateStatusText("error", (isInterrupting ? "Interrupted previous animation. " : "") + `Couldn't parse points:\n${e}`);
@@ -326,6 +326,7 @@ const crossMagnitude = (v, w) => v[0] * w[1] - v[1] * w[0];
  * ------------------------------------------------
  * Implement convex hull algorithms
  * ------------------------------------------------
+ * TODO: update status during animations! THIS IS IMMEDIATELY NECESSARY
  */
 const makeJarvisMarchAnimation = (points) => {
     // Background points
@@ -580,7 +581,7 @@ const makeAlgorithmAnimationHandlerFor = (algorithmName, algorithmAnimationCreat
         return;
     }
 
-    // TODO: validate that the points aren't collinear
+    // TODO: validate that the points aren't collinear this is a secondary need
 
     updateStatusText("info", (isInterrupting ? "Interrupting previous animation. " : "") + `${algorithmName} in progress.`);
     drawing.add(...algorithmAnimationCreator(points));
