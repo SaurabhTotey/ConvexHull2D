@@ -335,32 +335,30 @@ const makeJarvisMarchAnimation = (points) => {
     /*
      * Determine which point has the minimum x coordinate
      */
-    const findingMinXPointAnimations = [];
     let pointOfMinX = null;
     for (let point of points) {
         if (pointOfMinX === null || point[0] < pointOfMinX[0] || point[0] === pointOfMinX[0] && point[1] < pointOfMinX[1]) {
             if (pointOfMinX) {
                 const removalX = pointOfMinX[0];
                 const removalY = pointOfMinX[1];
-                findingMinXPointAnimations.push(new RemovalInstruction(
+                drawables.push(new RemovalInstruction(
                     0,
                     currentAnimationStage,
                     (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === removalX && drawingObject.y === removalY && drawingObject.color === "blue"
                 ));
             }
             pointOfMinX = point;
-            findingMinXPointAnimations.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
+            drawables.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
         } else {
-            findingMinXPointAnimations.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Point(...point, "red") : null));
+            drawables.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Point(...point, "red") : null));
         }
         currentAnimationStage += 1;
     }
-    findingMinXPointAnimations.push(new RemovalInstruction(
+    drawables.push(new RemovalInstruction(
         0,
         currentAnimationStage,
         (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfMinX[0] && drawingObject.y === pointOfMinX[1] && drawingObject.color === "black"
     ));
-    drawables.push(...findingMinXPointAnimations);
 
     /*
      * Define the march procedure to get the next convex hull point
@@ -450,32 +448,30 @@ const makeGrahamScanAnimation = (points) => {
     /*
      * Determine which point has the minimum y coordinate
      */
-    const findingMinYPointAnimations = [];
     let pointOfMinY = null;
     for (let point of points) {
         if (pointOfMinY === null || point[1] < pointOfMinY[1] || point[1] === pointOfMinY[1] && point[0] < pointOfMinY[0]) {
             if (pointOfMinY) {
                 const removalX = pointOfMinY[0];
                 const removalY = pointOfMinY[1];
-                findingMinYPointAnimations.push(new RemovalInstruction(
+                drawables.push(new RemovalInstruction(
                     0,
                     currentAnimationStage,
                     (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === removalX && drawingObject.y === removalY && drawingObject.color === "blue"
                 ));
             }
             pointOfMinY = point;
-            findingMinYPointAnimations.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
+            drawables.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
         } else {
-            findingMinYPointAnimations.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Point(...point, "red") : null));
+            drawables.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Point(...point, "red") : null));
         }
         currentAnimationStage += 1;
     }
-    findingMinYPointAnimations.push(new RemovalInstruction(
+    drawables.push(new RemovalInstruction(
         0,
         currentAnimationStage,
         (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfMinY[0] && drawingObject.y === pointOfMinY[1] && drawingObject.color === "black"
     ));
-    drawables.push(...findingMinYPointAnimations);
 
     /*
      * Sort points based on the angle of the x axis to that point when going through the lowest y point
