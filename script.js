@@ -361,18 +361,20 @@ const makeJarvisMarchAnimation = (points) => {
         (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfMinX[0] && drawingObject.y === pointOfMinX[1] && drawingObject.color === "black"
     ));
 
+
     /*
      * Define the march procedure to get the next convex hull point
      * Takes in the previous convex hull point and the direction vector that reached the point
      * Returns two values: the first is the next convex hull point and the second is the list of animations to add
      * The returned animations visualize what was checked in order to find the next convex hull point
      */
+    const pointsToNotCheck = [];
     const getNextConvexHullPointAndMakeAnimationsFrom = (previousConvexHullPoint, directionVectorToPreviousPoint) => {
         const findingBestLineAnimations = [];
         let pointOfLeastLeftTurn = null;
         let largestDotProductSoFar = -Infinity;
         for (const point of points) {
-            if (point[0] === previousConvexHullPoint[0] && point[1] == previousConvexHullPoint[1]) {
+            if (pointsToNotCheck.some((invalidPoint) => invalidPoint[0] === point[0] && invalidPoint[1] === point[1])) {
                 continue;
             }
             const directionToPoint = normalized([point[0] - previousConvexHullPoint[0], point[1] - previousConvexHullPoint[1]]);
@@ -436,6 +438,7 @@ const makeJarvisMarchAnimation = (points) => {
         drawables.push(...newAnimations);
         previousPreviousConvexHullPoint = [previousConvexHullPoint[0], previousConvexHullPoint[1]];
         previousConvexHullPoint = newConvexHullPoint;
+        pointsToNotCheck.push(previousConvexHullPoint);
     } while (previousConvexHullPoint[0] !== pointOfMinX[0] || previousConvexHullPoint[1] !== pointOfMinX[1]);
 
     return drawables;
