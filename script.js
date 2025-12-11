@@ -515,6 +515,8 @@ const makeGrahamScanAnimation = (points) => {
         currentAnimationStage += 1;
         while (!isPointLeftTurnAway(point)) {
             const removalPoint = currentConvexHullPoints.pop();
+            drawables.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Line(...removalPoint, ...point, "red") : null));
+            currentAnimationStage += 1;
             drawables.push(new RemovalInstruction(
                 0,
                 currentAnimationStage,
@@ -532,9 +534,23 @@ const makeGrahamScanAnimation = (points) => {
         currentConvexHullPoints.push(point);
     }
 
-    // TODO: remove black points under blue points (any points used in the convex hull)
-
-    // TODO: add line from last point to starting point
+    /*
+     * Remove any black points under blue points and adds the final line to the starting point
+     */
+    drawables.push(
+        new RemovalInstruction(
+            0,
+            currentAnimationStage,
+            (drawingObject) => (drawingObject instanceof Point) &&
+                currentConvexHullPoints.some((point) => point[0] === drawingObject.x && point[1] === drawingObject.y) &&
+                drawingObject.color === "black"
+        ),
+        new Animated(
+            10,
+            currentAnimationStage,
+            (_) => new Line(...currentConvexHullPoints[currentConvexHullPoints.length - 1], ...pointOfMinY, "blue")
+        )
+    );
 
     return drawables;
 };
