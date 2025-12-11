@@ -375,7 +375,7 @@ const makeJarvisMarchAnimation = (points) => {
                 continue;
             }
             const directionToPoint = normalized([point[0] - previousConvexHullPoint[0], point[1] - previousConvexHullPoint[1]]);
-            const isPointLeftTurnAway = crossMagnitude(directionVectorToPreviousPoint, directionToPoint) > 0;
+            const isPointLeftTurnAway = crossMagnitude(directionVectorToPreviousPoint, directionToPoint) >= 0;
             const dotProduct = dot(directionVectorToPreviousPoint, directionToPoint);
             if (isPointLeftTurnAway && dotProduct > largestDotProductSoFar) {
                 if (pointOfLeastLeftTurn) {
@@ -492,6 +492,49 @@ const makeGrahamScanAnimation = (points) => {
             (frameNumber) => (frameNumber / 10 >= i && frameNumber < angleSortAnimationDuration) ? new Line(...pointOfMinY, ...pointToConsider, "red") : null
         ));
     }
+    currentAnimationStage += 1;
+
+    /*
+     * Go through all sorted points and try and form a convex hull, backtracking if a right turn is encountered
+     */
+    const currentConvexHullPoints = [pointOfMinY];
+    const isPointLeftTurnAway = (point) => {
+        if (currentConvexHullPoints.length < 2) {
+            return true;
+        }
+        const secondToLastPoint = currentConvexHullPoints[currentConvexHullPoints.length - 2];
+        const lastPoint = currentConvexHullPoints[currentConvexHullPoints.length - 1];
+        return crossMagnitude(
+            normalized([lastPoint[0] - secondToLastPoint[0], lastPoint[1] - secondToLastPoint[1]]),
+            normalized([point[0] - lastPoint[0], point[1] - lastPoint[1]])
+        ) >= 0;
+    };
+    for (const pointToConsider of pointsToConsider) {
+        const point = [...pointToConsider];
+        drawables.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "red")));
+        currentAnimationStage += 1;
+        while (!isPointLeftTurnAway(point)) {
+            const removalPoint = currentConvexHullPoints.pop();
+            drawables.push(new RemovalInstruction(
+                0,
+                currentAnimationStage,
+                (drawingObject) =>
+                    ((drawingObject instanceof Point) && drawingObject.x === removalPoint[0] && drawingObject.y === removalPoint[1] && drawingObject.color === "blue") ||
+                        ((drawingObject instanceof Line) && drawingObject.x2 === removalPoint[0] && drawingObject.y2 === removalPoint[1] && drawingObject.color == "blue")
+            ));
+            currentAnimationStage += 1;
+        }
+        const originPoint = [...currentConvexHullPoints[currentConvexHullPoints.length - 1]];
+        drawables.push(new RemovalInstruction(0, currentAnimationStage, (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === point[0] && drawingObject.y === point[1] && drawingObject.color === "red"));
+        drawables.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
+        drawables.push(new Animated(10, currentAnimationStage, (_) => new Line(...originPoint, ...point, "blue")));
+        currentAnimationStage += 1;
+        currentConvexHullPoints.push(point);
+    }
+
+    // TODO: remove black points under blue points (any points used in the convex hull)
+
+    // TODO: add line from last point to starting point
 
     return drawables;
 };
