@@ -57,9 +57,12 @@ class Canvas {
         this.renderer.clearRect(0, 0, ...this.getPhysicalSize());
     }
 
-    drawDrawingArea() { // TODO: this is fucking ugly, change it! (immediate)
+    drawDrawingArea() {
         this.renderer.strokeStyle = "black";
-        this.renderer.strokeRect(...this.convertLogicalCoordinatesToPhysical(0, this.logicalHeight), ...this.getDrawingAreaSize());
+        this.renderer.fillStyle = "black";
+        this.renderer.fillRect(0, 0, ...this.getPhysicalSize());
+        this.renderer.fillStyle = "white";
+        this.renderer.fillRect(...this.convertLogicalCoordinatesToPhysical(0, this.logicalHeight), ...this.getDrawingAreaSize());
     }
 
 }
@@ -79,7 +82,7 @@ class Point extends Drawable {
         renderer.strokeStyle = this.color;
         renderer.fillStyle = this.color;
         renderer.beginPath();
-        const radius = canvas.convertLogicalCoordinatesToPhysical(2, 0)[0];
+        const radius = canvas.convertLogicalCoordinatesToPhysical(2, 0)[0] - canvas.convertLogicalCoordinatesToPhysical(0, 0)[0];
         renderer.arc(...canvas.convertLogicalCoordinatesToPhysical(this.x, this.y), radius, 0, 2 * Math.PI);
         renderer.fill();
 
