@@ -152,6 +152,17 @@ class RemovalInstruction extends Timed {
         this.filterForRemovalFunction = filterForRemovalFunction; // TODO: this way of removing drawables is ASS, could use some reworking (down the line)
     }
 }
+class StatusUpdate extends Timed {
+    constructor(delay, animationStage, statusType, statusText) {
+        super(delay, animationStage);
+        this.statusType = statusType;
+        this.statusText = statusText;
+    }
+
+    execute() {
+        updateStatusText(this.statusType, this.statusText);
+    }
+}
 
 class DrawingManager {
 
@@ -206,6 +217,12 @@ class DrawingManager {
             } else if (objectToUpdate instanceof RemovalInstruction) {
                 if (objectToUpdate.isDone()) {
                     filterFunctions.push(objectToUpdate.filterForRemovalFunction);
+                } else {
+                    newObjects.push(objectToUpdate);
+                }
+            } else if (objectToUpdate instanceof StatusUpdate) {
+                if (objectToUpdate.isDone()) {
+                    objectToUpdate.execute();
                 } else {
                     newObjects.push(objectToUpdate);
                 }
@@ -329,7 +346,6 @@ const crossMagnitude = (v, w) => v[0] * w[1] - v[1] * w[0];
  * ------------------------------------------------
  * Implement convex hull algorithms
  * ------------------------------------------------
- * TODO: update status during animations! THIS IS IMMEDIATELY NECESSARY
  */
 const makeJarvisMarchAnimation = (points) => {
     // Background points
@@ -339,6 +355,7 @@ const makeJarvisMarchAnimation = (points) => {
     /*
      * Determine which point has the minimum x coordinate
      */
+    drawables.push(new StatusUpdate(0, currentAnimationStage, "info", "Finding leftmost point."));
     let pointOfMinX = null;
     for (const point of points) {
         if (pointOfMinX === null || point[0] < pointOfMinX[0] || point[0] === pointOfMinX[0] && point[1] < pointOfMinX[1]) {
@@ -433,6 +450,7 @@ const makeJarvisMarchAnimation = (points) => {
      * Repeatedly run the main procedure for Jarvis March (getNextConvexHullPointAndMakeAnimationsFrom) until all convex hull points are found
      * We know we've found all points when the convex hull closes up on itself (i.e. reaches the starting point)
      */
+    drawables.push(new StatusUpdate(0, currentAnimationStage, "info", "Gift wrapping."));
     let previousPreviousConvexHullPoint = [pointOfMinX[0], pointOfMinX[1] + 1];
     let previousConvexHullPoint = pointOfMinX;
     do {
@@ -455,6 +473,7 @@ const makeGrahamScanAnimation = (points) => {
     /*
      * Determine which point has the minimum y coordinate
      */
+    drawables.push(new StatusUpdate(0, currentAnimationStage, "info", "Finding bottom-most point."));
     let pointOfMinY = null;
     for (const point of points) {
         if (pointOfMinY === null || point[1] < pointOfMinY[1] || point[1] === pointOfMinY[1] && point[0] < pointOfMinY[0]) {
@@ -483,6 +502,7 @@ const makeGrahamScanAnimation = (points) => {
     /*
      * Sort points based on the angle of the x axis to that point when going through the lowest y point
      */
+    drawables.push(new StatusUpdate(0, currentAnimationStage, "info", "Sorting points by angle with bottommost point to horizontal."));
     const pointsToConsider = points
         .filter((candidatePoint) => candidatePoint !== pointOfMinY)
         .toSorted((point1, point2) => {
@@ -521,31 +541,33 @@ const makeGrahamScanAnimation = (points) => {
         drawables.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "red")));
         currentAnimationStage += 1;
         while (!isPointLeftTurnAway(point)) {
-            const removalPoint = currentConvexHullPoints.pop();
-            drawables.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Line(...removalPoint, ...point, "red") : null));
+            drawables.push(new StatusUpdate(0, currentAnimationStage, "info", "Backtracking."));
+                const removalPoint = currentConvexHullPoints.pop();
+                drawables.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Line(...removalPoint, ...point, "red") : null));
+                currentAnimationStage += 1;
+                drawables.push(new RemovalInstruction(
+                    0,
+                    currentAnimationStage,
+                    (drawingObject) =>
+                        ((drawingObject instanceof Point) && drawingObject.x === removalPoint[0] && drawingObject.y === removalPoint[1] && drawingObject.color === "blue") ||
+                            ((drawingObject instanceof Line) && drawingObject.x2 === removalPoint[0] && drawingObject.y2 === removalPoint[1] && drawingObject.color == "blue")
+                ));
+                currentAnimationStage += 1;
+            }
+            drawables.push(new StatusUpdate(0, currentAnimationStage, "info", "Adding new edge."));
+            const originPoint = [...currentConvexHullPoints[currentConvexHullPoints.length - 1]];
+            drawables.push(new RemovalInstruction(0, currentAnimationStage, (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === point[0] && drawingObject.y === point[1] && drawingObject.color === "red"));
+            drawables.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
+            drawables.push(new Animated(10, currentAnimationStage, (_) => new Line(...originPoint, ...point, "blue")));
             currentAnimationStage += 1;
-            drawables.push(new RemovalInstruction(
-                0,
-                currentAnimationStage,
-                (drawingObject) =>
-                    ((drawingObject instanceof Point) && drawingObject.x === removalPoint[0] && drawingObject.y === removalPoint[1] && drawingObject.color === "blue") ||
-                        ((drawingObject instanceof Line) && drawingObject.x2 === removalPoint[0] && drawingObject.y2 === removalPoint[1] && drawingObject.color == "blue")
-            ));
-            currentAnimationStage += 1;
+            currentConvexHullPoints.push(point);
         }
-        const originPoint = [...currentConvexHullPoints[currentConvexHullPoints.length - 1]];
-        drawables.push(new RemovalInstruction(0, currentAnimationStage, (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === point[0] && drawingObject.y === point[1] && drawingObject.color === "red"));
-        drawables.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
-        drawables.push(new Animated(10, currentAnimationStage, (_) => new Line(...originPoint, ...point, "blue")));
-        currentAnimationStage += 1;
-        currentConvexHullPoints.push(point);
-    }
 
-    /*
-     * Remove any black points under blue points and adds the final line to the starting point
-     */
-    drawables.push(
-        new RemovalInstruction(
+        /*
+        * Remove any black points under blue points and adds the final line to the starting point
+        */
+        drawables.push(
+            new RemovalInstruction(
             0,
             currentAnimationStage,
             (drawingObject) => (drawingObject instanceof Point) &&
