@@ -450,32 +450,52 @@ const makeGrahamScanAnimation = (points) => {
     /*
      * Determine which point has the minimum y coordinate
      */
-    const findingMinXPointAnimations = [];
+    const findingMinYPointAnimations = [];
     let pointOfMinY = null;
     for (let point of points) {
         if (pointOfMinY === null || point[1] < pointOfMinY[1] || point[1] === pointOfMinY[1] && point[0] < pointOfMinY[0]) {
             if (pointOfMinY) {
                 const removalX = pointOfMinY[0];
                 const removalY = pointOfMinY[1];
-                findingMinXPointAnimations.push(new RemovalInstruction(
+                findingMinYPointAnimations.push(new RemovalInstruction(
                     0,
                     currentAnimationStage,
                     (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === removalX && drawingObject.y === removalY && drawingObject.color === "blue"
                 ));
             }
             pointOfMinY = point;
-            findingMinXPointAnimations.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
+            findingMinYPointAnimations.push(new Animated(10, currentAnimationStage, (_) => new Point(...point, "blue")));
         } else {
-            findingMinXPointAnimations.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Point(...point, "red") : null));
+            findingMinYPointAnimations.push(new Animated(10, currentAnimationStage, (frameNumber) => frameNumber < 10 ? new Point(...point, "red") : null));
         }
         currentAnimationStage += 1;
     }
-    findingMinXPointAnimations.push(new RemovalInstruction(
+    findingMinYPointAnimations.push(new RemovalInstruction(
         0,
         currentAnimationStage,
         (drawingObject) => (drawingObject instanceof Point) && drawingObject.x === pointOfMinY[0] && drawingObject.y === pointOfMinY[1] && drawingObject.color === "black"
     ));
-    drawables.push(...findingMinXPointAnimations);
+    drawables.push(...findingMinYPointAnimations);
+
+    /*
+     * Sort points based on the angle of the x axis to that point when going through the lowest y point
+     */
+    const pointsToConsider = points
+        .filter((candidatePoint) => candidatePoint !== pointOfMinY)
+        .toSorted((point1, point2) => {
+            const angle1 = dot(normalized([point1[0] - pointOfMinY[0], point1[1] - pointOfMinY[1]]), [1, 0]);
+            const angle2 = dot(normalized([point2[0] - pointOfMinY[0], point2[1] - pointOfMinY[1]]), [1, 0]);
+            return angle2 - angle1;
+        });
+    const angleSortAnimationDuration = 10 * pointsToConsider.length;
+    for (let i = 0; i < pointsToConsider.length; i += 1) {
+        let pointToConsider = pointsToConsider[i];
+        drawables.push(new Animated(
+            angleSortAnimationDuration,
+            currentAnimationStage,
+            (frameNumber) => (frameNumber / 10 >= i && frameNumber < angleSortAnimationDuration) ? new Line(...pointOfMinY, ...pointToConsider, "red") : null
+        ));
+    }
 
     return drawables;
 };
