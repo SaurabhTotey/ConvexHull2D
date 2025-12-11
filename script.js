@@ -8,7 +8,7 @@ canvas.setAttribute("width", `${canvas.offsetWidth}`);
 canvas.setAttribute("height", `${canvas.offsetHeight}`);
 const renderer = canvas.getContext("2d");
 window.onresize = () => {
-	canvas.setAttribute("width", `${window.innerWidth * 0.7}`);
+	canvas.setAttribute("width", `${window.innerWidth * 0.8}`);
 	canvas.setAttribute("height", `${window.innerHeight}`);
 };
 
