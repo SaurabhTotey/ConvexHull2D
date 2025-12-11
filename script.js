@@ -584,15 +584,6 @@ const makeGrahamScanAnimation = (points) => {
     return drawables;
 };
 
-const dumbTestAnimation = (points) => {
-    const drawables = points.map(point => new Point(point[0], point[1]));
-    drawables.push(new Line(0, 200, 600, 200));
-    drawables.push(new Animated(500, 0, (frame) => new Line(300, 400, 300, 400 - 400 * frame / 500, frame === 500 ? "blue" : "red")));
-    drawables.push(new Animated(500, 0, (frame) => new Line(0, 400, 600 * frame / 500, 400 - 400 * frame / 500)));
-    drawables.push(new Animated(500, 1, (frame) => new Line(0, 0, 600 * frame / 500, 400 * frame / 500)));
-    return drawables;
-}
-
 /*
  * ------------------------------------------------
  * Initialize buttons to start animations
