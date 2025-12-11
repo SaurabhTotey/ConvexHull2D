@@ -279,6 +279,15 @@ const updateStatusText = (type, statusText) => {
 const pointsInputElement = document.getElementById("points-input");
 let previousText = "";
 let points = [];
+const isAValidPointsObject = (pointsObjectCandidate) => {
+    return Array.isArray(pointsObjectCandidate) &&
+        pointsObjectCandidate.every((entry) => Array.isArray(entry) &&
+            entry.length == 2 &&
+            entry.every(Number.isFinite) &&
+            0 <= entry[0] && entry[0] <= LOGICAL_WIDTH &&
+            0 <= entry[1] && entry[1] <= LOGICAL_HEIGHT
+        )
+};
 const handlePointsInput = () => {
     const currentText = pointsInputElement.value;
     if (currentText === previousText) {
@@ -292,7 +301,10 @@ const handlePointsInput = () => {
     let newPoints = [];
     try {
         newPoints = JSON.parse(`[${currentText.replaceAll("(", "[").replaceAll(")", "]")}]`);
-        // TODO: validate points: the object should be valid (i.e. what we're expecting), and the points must be in the range (tertiary need)
+        if (!isAValidPointsObject(newPoints)) {
+            updateStatusText("error", "Supplied points were parsed, but the type or range was invalid.");
+            return;
+        }
         updateStatusText(isInterrupting ? "info" : "success", (isInterrupting ? "Interrupted previous animation. " : "") + `Parsed ${newPoints.length} points!`);
     } catch (e) {
         updateStatusText("error", (isInterrupting ? "Interrupted previous animation. " : "") + `Couldn't parse points:\n${e}`);
