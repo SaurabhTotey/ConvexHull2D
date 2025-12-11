@@ -224,7 +224,7 @@ class DrawingManager {
     draw() {
         this.canvas.clear();
         this.canvas.drawDrawingArea();
-        for (let objectToDraw of this.objects.filter((obj) => obj && obj.draw)) {
+        for (const objectToDraw of this.objects.filter((obj) => obj && obj.draw)) {
             objectToDraw.draw(this.canvas.renderer, this.canvas);
         }
     }
@@ -336,7 +336,7 @@ const makeJarvisMarchAnimation = (points) => {
      * Determine which point has the minimum x coordinate
      */
     let pointOfMinX = null;
-    for (let point of points) {
+    for (const point of points) {
         if (pointOfMinX === null || point[0] < pointOfMinX[0] || point[0] === pointOfMinX[0] && point[1] < pointOfMinX[1]) {
             if (pointOfMinX) {
                 const removalX = pointOfMinX[0];
@@ -370,7 +370,7 @@ const makeJarvisMarchAnimation = (points) => {
         const findingBestLineAnimations = [];
         let pointOfLeastLeftTurn = null;
         let largestDotProductSoFar = -Infinity;
-        for (let point of points) {
+        for (const point of points) {
             if (point[0] === previousConvexHullPoint[0] && point[1] == previousConvexHullPoint[1]) {
                 continue;
             }
@@ -449,7 +449,7 @@ const makeGrahamScanAnimation = (points) => {
      * Determine which point has the minimum y coordinate
      */
     let pointOfMinY = null;
-    for (let point of points) {
+    for (const point of points) {
         if (pointOfMinY === null || point[1] < pointOfMinY[1] || point[1] === pointOfMinY[1] && point[0] < pointOfMinY[0]) {
             if (pointOfMinY) {
                 const removalX = pointOfMinY[0];
