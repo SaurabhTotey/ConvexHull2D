@@ -1,10 +1,10 @@
 # ConvexHull2D
 
-Final project for CS/MATH 163 at Tufts (https://www.cs.tufts.edu/comp/163/Project_25f.pdf). Accessible at https://saurabhtotey.github.io/ConvexHull2D/.
+Final project for CS/MATH 163 at Tufts (https://www.cs.tufts.edu/comp/163/Project_25f.pdf). Accessible at https://saurabhtotey.github.io/ConvexHull2D/ with source at https://github.com/SaurabhTotey/ConvexHull2D/.
 
 ## Project Structure
 
-Nothing special besides a web browser is needed to run the animations. One need only open https://saurabhtotey.github.io/ConvexHull2D/, put some points in the text box in the console at the right (the canvas is 600 wide and 400 tall, so points should fall in that range), and then choose a convex hull algorithm to visualize. Then the canvas will display how the convex hull is determined via that algorithm.
+Nothing special besides a web browser is needed to run the animations. One need only open https://saurabhtotey.github.io/ConvexHull2D/ (or `index.html`), put some points in the text box in the console at the right (the canvas is 600 wide and 400 tall, so points should fall in that range), and then choose a convex hull algorithm to visualize. Then the canvas will display how the convex hull is determined via that algorithm.
 
 Page structure is defined in `index.html` and `style.css`, but `script.js` has all the functionality. The major sections of `script.js` are labelled, but the bulk of the code is devoted to handling animations and timing events so that things appear on the canvas as expected. Because the animation infrastructure was determined as I was making this project, a lot of things are labelled misleadingly. Importantly, the DrawingManager maintains a list of 'instructions' and draws according to whichever instructions are determined to be active to give the illusion of animations occurring. The convex hull algorithms mainly serve to generate the animation instructions to show the convex hull creation.
 
