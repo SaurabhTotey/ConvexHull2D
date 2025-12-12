@@ -20,7 +20,8 @@ body {
 	flex-direction: column;
     padding-left: 2%;
     padding-right: 2%;
-    min-height: 100vh;
+    height: 100vh;
+    overflow-y: scroll;
 }
 
 #console > button {
